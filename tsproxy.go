@@ -68,8 +68,8 @@ func parselisten(listen string) ([]listenon, error) {
 
 				switch pairarr[0] {
 				case "tls":
-					bool, _ := strconv.ParseBool(pairarr[1])
-					on.tls = bool
+					should, _ := strconv.ParseBool(pairarr[1])
+					on.tls = should
 					tlsWasSet = true
 				case "addr":
 					on.addr = pairarr[1]
@@ -98,16 +98,17 @@ func main() {
 		hostname = os.Getenv("HOSTNAME")
 		strategy = os.Getenv("STRATEGY")
 		debug    = os.Getenv("DEBUG")
+		dir      = os.Getenv("DIR")
 	)
 	log.SetOutput(os.Stderr)
 
-	if err := run(listen, remote, debug, hostname, strategy); err != nil {
+	if err := run(listen, remote, debug, hostname, strategy, dir); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(listen, remote, debug, hostname, strategy string) error {
+func run(listen, remote, debug, hostname, strategy, dir string) error {
 	if remote == "" {
 		return errors.New("remote cannot be blank")
 	}
@@ -133,6 +134,10 @@ func run(listen, remote, debug, hostname, strategy string) error {
 	}
 	defer s.Close()
 
+	if dir != "" {
+		s.Dir = dir
+	}
+
 	if debug != "" {
 		log.SetOutput(os.Stderr)
 	} else {
@@ -147,7 +152,7 @@ func run(listen, remote, debug, hostname, strategy string) error {
 		return err
 	}
 
-	log.Printf("opening reverse proxy to remote=%v hostname=%v", target, hostname)
+	log.Printf("opening reverse proxy to remote=%v hostname=%v strategy=%v", target, hostname, strategy)
 
 	var proxy http.Handler
 
